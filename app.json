@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Kaatha Lo Raasko",
+    "slug": "expense-calculator-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#007AFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.expensecalculator",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Authenticate to access your expense data."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#007AFF"
+      },
+      "package": "com.example.expensecalculator",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Authenticate to access your expense data."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9e388612-0b9f-4ab8-90b2-7d7d16cf3127"
+      }
+    }
+  }
+}
