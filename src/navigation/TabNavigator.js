@@ -22,6 +22,8 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
+      // ensure scene content doesn't get hidden behind the absolute tab bar
+      sceneContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT }}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

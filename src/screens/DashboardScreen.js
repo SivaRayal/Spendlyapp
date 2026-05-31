@@ -10,6 +10,10 @@ import { listMonth, summarize } from '../db/excelDb';
 import { inr, MONTH_NAMES } from '../theme/format';
 import { colors, spacing, typography, radius, CATEGORY_META } from '../theme';
 
+function SectionHeader({ title }) {
+  return <Text style={styles.sectionHeader}>{title}</Text>;
+}
+
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -47,7 +51,7 @@ export default function DashboardScreen({ navigation }) {
   }
 
   const { summary, expenses } = data;
-  const recent = [...expenses].slice(-5).reverse();
+  const recent = [...expenses].reverse();
   const topCategories = Object.entries(summary.byCategory || {})
     .filter(([, v]) => v.debit > 0)
     .sort((a, b) => b[1].debit - a[1].debit)
@@ -107,7 +111,7 @@ export default function DashboardScreen({ navigation }) {
         </Card>
       )}
 
-      <SectionHeader title="Recent activity" />
+      <SectionHeader title={`${MONTH_NAMES[month - 1]} ${year} activity`} />
       {recent.length === 0 ? (
         <Card>
           <Text style={styles.empty}>
@@ -138,12 +142,9 @@ export default function DashboardScreen({ navigation }) {
           })}
         </Card>
       )}
+      <Text style={styles.footer}> &nbsp;</Text>
     </Screen>
   );
-}
-
-function SectionHeader({ title }) {
-  return <Text style={styles.sectionHeader}>{title}</Text>;
 }
 
 const styles = StyleSheet.create({
@@ -186,4 +187,5 @@ const styles = StyleSheet.create({
   txTitle: { ...typography.body, color: colors.text },
   txSub: { ...typography.footnote, color: colors.textMuted, marginTop: 2 },
   txAmount: { ...typography.headline },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

@@ -117,6 +117,7 @@ export default function ReportsScreen() {
           <TopSpending top={data.summary.topSpending} />
         </>
       )}
+      <Text style={styles.footer}>&nbsp;</Text>
     </Screen>
   );
 }
@@ -281,4 +282,5 @@ const styles = StyleSheet.create({
   dataRowSub: { ...typography.footnote, color: colors.textMuted, marginTop: 2 },
   dataRowAmount: { ...typography.headline },
   txTitle: { ...typography.body, color: colors.text },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

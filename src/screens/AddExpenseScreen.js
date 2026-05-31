@@ -188,6 +188,7 @@ export default function AddExpenseScreen({ navigation, route }) {
             />
           </View>
         ) : null}
+        <Text style={styles.footer}>&nbsp;</Text>
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -226,4 +227,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

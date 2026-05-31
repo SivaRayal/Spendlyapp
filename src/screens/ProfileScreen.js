@@ -128,6 +128,7 @@ export default function ProfileScreen() {
         icon="log-out-outline"
         onPress={handleLogout}
       />
+      <Text style={styles.footer}>&nbsp;</Text>
     </Screen>
   );
 }
@@ -210,4 +211,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.separator,
     marginLeft: spacing.lg + 36 + spacing.md,
   },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

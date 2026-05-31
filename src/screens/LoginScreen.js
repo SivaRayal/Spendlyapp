@@ -88,6 +88,7 @@ export default function LoginScreen({ navigation }) {
           onPress={() => navigation.navigate('Register')}
           variant={users.length === 0 ? 'primary' : 'secondary'}
         />
+        <Text style={styles.footer}> </Text>
       </View>
     </View>
   );
@@ -171,4 +172,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
 });

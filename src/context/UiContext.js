@@ -3,7 +3,8 @@ import React, { createContext, useContext, useRef, useState, useCallback } from 
 const UiContext = createContext(null);
 
 export function UiProvider({ children }) {
-  const [visible, setVisible] = useState(false);
+  // default to visible so the tab bar shows on app start
+  const [visible, setVisible] = useState(true);
   const hideTimer = useRef(null);
 
   const show = useCallback((ttl = 3000) => {

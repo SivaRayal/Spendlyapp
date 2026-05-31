@@ -1,8 +1,13 @@
-# Kaatha Lo Raasko — Mobile (React Native / Expo)
+# Spendly ( Kaatha Lo Raasko ) — Mobile (React Native / Expo)
 
 A fully offline, on-device expense tracker built with **Expo + React Native** and an **iOS-style** UI. Same functionality as the web version: per-user data, monthly Excel sheets with built-in summaries, category breakdowns, and Top 5 spending.
 
 Authentication uses **device biometrics (Face ID / Touch ID / fingerprint)** — no passwords. All data lives in app-private storage on the device.
+
+# Design & Developer Details
+
+- Author: Siva Rayal
+- Email: kuruva.siva8055@gmail.com
 
 ## Highlights
 
@@ -57,7 +62,7 @@ expense-calculator-mobile/
 From the project root:
 
 ```bash
-cd C:\Users\SIVA\IdeaProjects\expense-calculator-mobile
+cd ..\expense-calculator-mobile
 npm install
 ```
 
