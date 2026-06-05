@@ -35,8 +35,8 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.logoWrap}>
               <Ionicons name="wallet" size={36} color={colors.white} />
             </View>
-            <Text style={styles.heroTitle}>Kaatha Lo Raasko</Text>
-            <Text style={styles.heroSubtitle}>Track every rupee, beautifully.</Text>
+            <Text style={styles.heroTitle}>Spendly</Text>
+            <Text style={styles.heroSubtitle}>Kaatha Lo Raasko.</Text>
           </View>
         </SafeAreaView>
       </LinearGradient>

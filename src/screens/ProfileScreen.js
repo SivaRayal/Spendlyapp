@@ -135,15 +135,24 @@ export default function ProfileScreen() {
 
 function ActionRow({ icon, label, subtitle, onPress }) {
   const Container = onPress ? Pressable : View;
+  const leftIcon = onPress; // show left icon only for actionable rows
   return (
-    <Container onPress={onPress} style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}>
-      <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
-      </View>
+    <Container
+      onPress={onPress}
+      {...(onPress ? { style: ({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }] } : { style: styles.actionRow })}
+    >
+      {leftIcon && (
+        <View style={styles.actionIcon}>
+          <Ionicons name={icon} size={20} color={colors.primary} />
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text style={styles.actionLabel}>{label}</Text>
         {subtitle && <Text style={styles.actionSub}>{subtitle}</Text>}
       </View>
+      {!onPress && icon && (
+        <Ionicons name={icon} size={18} color={colors.textMuted} style={{ marginLeft: 8 }} />
+      )}
       {onPress && <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />}
     </Container>
   );

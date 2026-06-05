@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../components/Screen';
 import Card from '../components/Card';
@@ -10,8 +11,10 @@ import { useAuth } from '../context/AuthContext';
 import { listMonth, listYear, summarize } from '../db/excelDb';
 import { inr, MONTH_NAMES, MONTH_SHORT } from '../theme/format';
 import { colors, spacing, typography, radius, CATEGORY_META } from '../theme';
+// TopSpending moved to DashboardScreen
 
 export default function ReportsScreen() {
+  const navigation = useNavigation();
   const { user } = useAuth();
   const now = new Date();
   const [mode, setMode] = useState('monthly');
@@ -112,11 +115,46 @@ export default function ReportsScreen() {
             <StatCard label="Entries" value={String(data.summary.count)} icon="layers-outline" />
           </View>
 
+          {data.kind === 'monthly' && (
+            <>
+              <Text style={styles.section}>{`${MONTH_NAMES[month - 1]} ${year} activity`}</Text>
+              {(!data.expenses || data.expenses.length === 0) ? (
+                <Card>
+                  <Text style={styles.empty}>No transactions yet this month. Tap the + tab to add one.</Text>
+                </Card>
+              ) : (
+                <Card padded={false} style={{ paddingVertical: spacing.sm }}>
+                  {[...data.expenses].reverse().map((e, i) => {
+                    const meta = CATEGORY_META[e.category] || {};
+                    const isCredit = e.type === 'Credit';
+                    return (
+                      <Pressable key={e.id} onPress={() => navigation.navigate('Add', { expense: e })}>
+                        <View style={[styles.txRow, i > 0 && styles.divider]}>
+                          <View style={[styles.catIcon, { backgroundColor: (meta.color || colors.primary) + '22' }]}>
+                            <Ionicons name={meta.icon || 'pricetag-outline'} size={18} color={meta.color || colors.primary} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.txTitle} numberOfLines={1}>{e.details}</Text>
+                            <Text style={styles.dataRowSub}>{e.category} · {e.date}</Text>
+                          </View>
+                          <Text style={[styles.dataRowAmount, { color: isCredit ? colors.success : colors.danger }]}> 
+                            {isCredit ? '+' : '-'}{inr(e.amount)}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </Card>
+              )}
+            </>
+          )}
+
           {data.kind === 'yearly' && <MonthlyBreakdown monthly={data.monthly} />}
-          <CategoryBreakdown byCategory={data.summary.byCategory} />
-          <TopSpending top={data.summary.topSpending} />
+          {/* Category breakdown moved to DashboardScreen */}
         </>
       )}
+      <Text style={styles.footer}>&nbsp;</Text>
+      <Text style={styles.footer}>&nbsp;</Text>
       <Text style={styles.footer}>&nbsp;</Text>
     </Screen>
   );
@@ -152,71 +190,9 @@ function MonthlyBreakdown({ monthly }) {
   );
 }
 
-function CategoryBreakdown({ byCategory }) {
-  const rows = Object.entries(byCategory).filter(([, v]) => v.credit !== 0 || v.debit !== 0);
-  return (
-    <>
-      <Text style={styles.section}>Category breakdown</Text>
-      {rows.length === 0 ? (
-        <Card><Text style={styles.empty}>No data yet.</Text></Card>
-      ) : (
-        <Card padded={false} style={{ paddingVertical: spacing.sm }}>
-          {rows.map(([cat, v], i) => {
-            const meta = CATEGORY_META[cat] || {};
-            const net = v.credit - v.debit;
-            return (
-              <View key={cat} style={[styles.catBreakRow, i > 0 && styles.divider]}>
-                <View style={[styles.catIcon, { backgroundColor: (meta.color || colors.primary) + '22' }]}>
-                  <Ionicons name={meta.icon || 'pricetag-outline'} size={18} color={meta.color || colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.dataRowLabel}>{cat}</Text>
-                  <Text style={styles.dataRowSub}>
-                    +{inr(v.credit)} · -{inr(v.debit)}
-                  </Text>
-                </View>
-                <Text style={[styles.dataRowAmount, { color: net >= 0 ? colors.success : colors.danger }]}>
-                  {inr(net)}
-                </Text>
-              </View>
-            );
-          })}
-        </Card>
-      )}
-    </>
-  );
-}
+// Category breakdown moved to DashboardScreen
 
-function TopSpending({ top }) {
-  return (
-    <>
-      <Text style={styles.section}>Top 5 spending</Text>
-      {(!top || top.length === 0) ? (
-        <Card><Text style={styles.empty}>No debit transactions yet.</Text></Card>
-      ) : (
-        <Card padded={false} style={{ paddingVertical: spacing.sm }}>
-          {top.map((e, i) => {
-            const meta = CATEGORY_META[e.category] || {};
-            return (
-              <View key={e.id} style={[styles.txRow, i > 0 && styles.divider]}>
-                <View style={[styles.catIcon, { backgroundColor: (meta.color || colors.primary) + '22' }]}>
-                  <Ionicons name={meta.icon || 'pricetag-outline'} size={18} color={meta.color || colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.txTitle} numberOfLines={1}>{e.details}</Text>
-                  <Text style={styles.dataRowSub}>{e.category} · {e.date} · {e.mode}</Text>
-                </View>
-                <Text style={[styles.dataRowAmount, { color: colors.danger }]}>
-                  -{inr(e.amount)}
-                </Text>
-              </View>
-            );
-          })}
-        </Card>
-      )}
-    </>
-  );
-}
+// TopSpending moved to DashboardScreen
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', marginTop: spacing.md },

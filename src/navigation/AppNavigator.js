@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
+import CategoryScreen from '../screens/CategoryScreen';
 import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -22,7 +23,10 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        <Stack.Screen name="Main" component={TabNavigator} />
+        <>
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="Category" component={CategoryScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="Login"    component={LoginScreen} />

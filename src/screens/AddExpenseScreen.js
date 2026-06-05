@@ -27,8 +27,8 @@ export default function AddExpenseScreen({ navigation, route }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (editing) {
-      const e = route.params.expense;
+    const e = route?.params?.expense;
+    if (e) {
       setForm({
         date: e.date || todayISO(),
         details: e.details || '',
@@ -37,8 +37,18 @@ export default function AddExpenseScreen({ navigation, route }) {
         amount: String(e.amount || ''),
         category: e.category || 'Bill',
       });
+    } else {
+      // Reset form when opening Add screen without an expense (avoid cached values)
+      setForm({
+        date: todayISO(),
+        details: '',
+        type: 'Debit',
+        mode: 'UPI',
+        amount: '',
+        category: 'Bill',
+      });
     }
-  }, [editing, route]);
+  }, [route?.params?.expense]);
 
   function set(field, value) {
     setForm({ ...form, [field]: value });
@@ -63,7 +73,7 @@ export default function AddExpenseScreen({ navigation, route }) {
         const { updateExpense } = await import('../db/excelDb');
         await updateExpense(user.id, id, { ...form, amount: amt });
         Alert.alert('Updated', 'Expense updated successfully.', [
-          { text: 'OK', onPress: () => navigation.goBack() },
+          { text: 'OK', onPress: () => navigation.navigate('Home') },
         ]);
       } else {
         await addExpense(user.id, { ...form, amount: amt });
@@ -91,7 +101,7 @@ export default function AddExpenseScreen({ navigation, route }) {
         try {
           const { deleteExpense } = await import('../db/excelDb');
           await deleteExpense(user.id, route.params.expense.id);
-          Alert.alert('Deleted', 'Transaction removed.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+          Alert.alert('Deleted', 'Transaction removed.', [{ text: 'OK', onPress: () => navigation.navigate('Home') }]);
         } catch (err) {
           Alert.alert('Could not delete', err.message);
         } finally {

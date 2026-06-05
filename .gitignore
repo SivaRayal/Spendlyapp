@@ -1,6 +1,8 @@
 node_modules/
 .expo/
+.vscode/
 dist/
+android/
 web-build/
 *.jks
 *.p8
@@ -9,3 +11,5 @@ web-build/
 *.mobileprovision
 *.orig.*
 .env*
+
+package-lock.json

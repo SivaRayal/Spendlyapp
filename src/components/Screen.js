@@ -19,6 +19,7 @@ export default function Screen({
   const lastOffset = useRef(0);
   const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
+  const touchStartRef = useRef(null);
   const EXTRA_TABBAR_SPACE = Platform.OS === 'ios' ? 88 : 64; // match tab bar height
 
   const body = scrollable ? (
@@ -36,10 +37,19 @@ export default function Screen({
       extraScrollHeight={20}
       scrollEventThrottle={16}
       onScroll={(e) => {
+        // drive Animated scroll handling in UiContext
+        if (ui.onScrollAnimated) ui.onScrollAnimated(e);
         const y = e.nativeEvent.contentOffset.y;
         const prev = lastOffset.current || 0;
-        if (Math.abs(y - prev) > 5) {
-          ui.show(3000);
+        const delta = y - prev;
+        if (Math.abs(delta) > 5) {
+          if (delta > 0) {
+            // Scrolling down -> hide tab bar
+            ui.hide();
+          } else {
+            // Scrolling up -> show tab bar
+            ui.show(3000);
+          }
         }
         lastOffset.current = y;
       }}
@@ -52,7 +62,24 @@ export default function Screen({
       {children}
     </KeyboardAwareScrollView>
   ) : (
-    <View style={[styles.scrollContent, contentStyle, { flex: 1, paddingBottom: insets.bottom + EXTRA_TABBAR_SPACE }]}>{children}</View>
+    <View
+      style={[styles.scrollContent, contentStyle, { flex: 1, paddingBottom: insets.bottom + EXTRA_TABBAR_SPACE }]}
+      onStartShouldSetResponder={() => true}
+      onResponderGrant={(e) => { touchStartRef.current = e.nativeEvent.pageY; }}
+      onResponderRelease={(e) => {
+        try {
+          const start = touchStartRef.current || 0;
+          const end = e.nativeEvent.pageY;
+          const delta = end - start;
+          // swipe up (negative delta) should show the tab bar
+          if (delta < -20) ui.show(3000);
+        } catch (err) {
+          // ignore
+        }
+      }}
+    >
+      {children}
+    </View>
   );
 
   return (
@@ -67,9 +94,13 @@ export default function Screen({
         </View>
       )}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={() => ui.toggle()}>
-          {body}
-        </TouchableWithoutFeedback>
+        {scrollable ? (
+          <TouchableWithoutFeedback onPress={() => ui.toggle()}>
+            {body}
+          </TouchableWithoutFeedback>
+        ) : (
+          body
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

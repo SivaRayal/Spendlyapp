@@ -5,16 +5,18 @@ import DashboardScreen from '../screens/DashboardScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ImportScreen from '../screens/ImportScreen';
 import { colors } from '../theme';
 import CustomTabBar from '../components/CustomTabBar';
 
 const Tab = createBottomTabNavigator();
 
 const ICONS = {
-  Home:    { active: 'home',         inactive: 'home-outline' },
-  Add:     { active: 'add-circle',   inactive: 'add-circle-outline' },
-  Reports: { active: 'bar-chart',    inactive: 'bar-chart-outline' },
-  Profile: { active: 'person-circle', inactive: 'person-circle-outline' },
+  Home:    { active: 'home',              inactive: 'home-outline' },
+  Add:     { active: 'add-circle',        inactive: 'add-circle-outline' },
+  Reports: { active: 'bar-chart',         inactive: 'bar-chart-outline' },
+  Import:  { active: 'cloud-upload',      inactive: 'cloud-upload-outline' },
+  Profile: { active: 'person-circle',     inactive: 'person-circle-outline' },
 };
 
 export default function TabNavigator() {
@@ -49,8 +51,19 @@ export default function TabNavigator() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen name="Home"    component={DashboardScreen} />
-      <Tab.Screen name="Add"     component={AddExpenseScreen} options={{ title: 'Add' }} />
+      <Tab.Screen
+        name="Add"
+        component={AddExpenseScreen}
+        options={{ title: 'Add' }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            // Clear any existing expense param so Add screen is not in editing mode
+            navigation.setParams({ expense: undefined });
+          },
+        })}
+      />
       <Tab.Screen name="Reports" component={ReportsScreen} />
+      <Tab.Screen name="Import"  component={ImportScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
