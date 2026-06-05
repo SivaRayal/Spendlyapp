@@ -6,10 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#007AFF"
-    },
+    "sdkVersion": "56.0.0",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.example.expensecalculator",
@@ -36,8 +33,7 @@
         {
           "faceIDPermission": "Authenticate to access your expense data."
         }
-      ],
-      "@react-native-community/datetimepicker"
+      ]
     ],
     "extra": {
       "eas": {

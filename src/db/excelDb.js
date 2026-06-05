@@ -261,3 +261,165 @@ export function summarize(expenses) {
 export function getExpensesFilePath(userId) {
   return expensesFileFor(userId);
 }
+
+const MONTH_SHEET_REGEX = /^\d{4}-\d{2}$/;
+// Spendly stores dates as YYYY-MM-DD strings.
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function importFromExcel(userId, fileUri) {
+  // ── 1. Read source file ────────────────────────────────────────────────────
+  // On Android the DocumentPicker URI (content:// or a sandboxed file://) is
+  // outside the app's readable scope, so FileSystem.readAsStringAsync rejects
+  // it directly.  The reliable fix is to copy the file into the app's own
+  // cache directory first, read from there, then delete the temp copy.
+  await ensureDataDir();
+  const tmpPath = FileSystem.cacheDirectory + 'spendly_import_tmp_' + Date.now() + '.xlsx';
+
+  try {
+    await FileSystem.copyAsync({ from: fileUri, to: tmpPath });
+  } catch (copyErr) {
+    throw new Error(
+      'Could not access the selected file. On some devices you may need to ' +
+      'choose the file from the Downloads folder rather than from a cloud ' +
+      'provider.\n\nDetail: ' + copyErr.message,
+    );
+  }
+
+  let b64;
+  try {
+    b64 = await FileSystem.readAsStringAsync(tmpPath, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+  } catch (err) {
+    throw new Error(
+      'Could not read the selected file after copying it locally. ' +
+      'Make sure the file is not corrupted.\n\nDetail: ' + err.message,
+    );
+  } finally {
+    // Always clean up the temp copy, even if the read failed
+    FileSystem.deleteAsync(tmpPath, { idempotent: true }).catch(() => {});
+  }
+
+  // ── 2. Parse workbook ──────────────────────────────────────────────────────
+  let srcWb;
+  try {
+    srcWb = XLSX.read(b64, { type: 'base64' });
+  } catch (err) {
+    throw new Error(
+      'The file could not be parsed as a valid Excel workbook. ' +
+      'Please use a Spendly-exported .xlsx file.',
+    );
+  }
+
+  // ── 3. Find YYYY-MM month sheets ───────────────────────────────────────────
+  const monthSheets = srcWb.SheetNames.filter(n => MONTH_SHEET_REGEX.test(n));
+  if (monthSheets.length === 0) {
+    throw new Error(
+      'No monthly sheets (YYYY-MM) found in this workbook. ' +
+      'Only Spendly-format files with month sheets can be imported.',
+    );
+  }
+
+  // ── 4. Extract transactions from each month sheet ──────────────────────────
+  const toImport = []; // { sheetName, expenses[] }  — only sheets with data
+  let skipped = 0;     // actual transaction rows that failed field validation
+
+  for (const sheetName of monthSheets) {
+    const sheet = srcWb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    // Need at least a header row + one data row
+    if (!rows || rows.length < 2) continue;
+
+    // ── 4a. Validate that the required Spendly header columns are present ────
+    const header = rows[0].map(h => String(h).trim());
+    const missingHeaders = HEADER_ROW.filter(h => !header.includes(h));
+    if (missingHeaders.length > 0) {
+      throw new Error(
+        `Sheet "${sheetName}" is missing required columns: ${missingHeaders.join(', ')}.\n\n` +
+        'Only Spendly-format files are supported.',
+      );
+    }
+
+    // ── 4b. Build a name→index map (robust to column reordering) ─────────────
+    const colIdx = {};
+    HEADER_ROW.forEach(h => { colIdx[h] = header.indexOf(h); });
+
+    // ── 4c. Read transaction rows — STOP at first blank row ───────────────────
+    //   This mirrors extractExpenses() exactly: transactions are a contiguous
+    //   block at the top of the sheet, followed by blank rows then the summary
+    //   section.  Stopping at the first blank row means we never accidentally
+    //   parse summary/breakdown/top-5 rows as transactions, and the skipped
+    //   counter stays accurate.
+    const expenses = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+
+      // Empty row → end of the transaction block (summary section follows)
+      if (!r || r.length === 0) break;
+      const idVal = String(r[colIdx['Id']] ?? '').trim();
+      if (!idVal) break; // first cell empty → separator row
+
+      // Validate required fields: date (YYYY-MM-DD) and transaction type
+      const dateVal = String(r[colIdx['Date']] ?? '').trim();
+      const typeVal = String(r[colIdx['Transaction Type']] ?? '').trim();
+
+      if (!DATE_REGEX.test(dateVal) || !TRANSACTION_TYPES.includes(typeVal)) {
+        // This is a genuine transaction row that has bad data — count it
+        skipped++;
+        continue;
+      }
+
+      const modeVal    = String(r[colIdx['Mode']] ?? '').trim();
+      const catVal     = String(r[colIdx['Category']] ?? '').trim();
+      const detailsVal = String(r[colIdx['Details']] ?? '').trim();
+      const amountRaw  = r[colIdx['Amount (INR)']];
+      const amountVal  = Number(amountRaw);
+
+      expenses.push({
+        id:       idVal,
+        date:     dateVal,
+        details:  detailsVal,
+        type:     typeVal,
+        mode:     MODES.includes(modeVal) ? modeVal : 'UPI',
+        amount:   Number.isFinite(amountVal) ? amountVal : 0,
+        category: CATEGORIES.includes(catVal) ? catVal : 'Unplanned',
+      });
+    }
+
+    // Only queue sheets that actually contain transactions.
+    // Skipping empty sheets prevents accidentally wiping an existing month's
+    // data in the destination workbook with an empty replacement.
+    if (expenses.length > 0) {
+      toImport.push({ sheetName, expenses });
+    }
+  }
+
+  // ── 5. Guard: nothing importable found ────────────────────────────────────
+  if (toImport.length === 0) {
+    throw new Error(
+      'No importable transactions were found in this workbook.\n\n' +
+      'Make sure you are importing a Spendly-exported .xlsx file that ' +
+      'contains at least one monthly sheet with transaction data.',
+    );
+  }
+
+  // ── 6. Merge into the user's local workbook ────────────────────────────────
+  //   Each month present in the source replaces the same month in the
+  //   destination.  Months not present in the source are left untouched.
+  const destWb = await loadWorkbook(userId);
+  let totalImported = 0;
+
+  for (const { sheetName, expenses } of toImport) {
+    upsertSheet(destWb, sheetName, expenses);
+    totalImported += expenses.length;
+  }
+
+  await saveWorkbook(userId, destWb);
+
+  return {
+    imported: totalImported,
+    skipped,
+    months: toImport.length,
+  };
+}
