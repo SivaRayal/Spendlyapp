@@ -6,7 +6,7 @@ import AddExpenseScreen from '../screens/AddExpenseScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ImportScreen from '../screens/ImportScreen';
-import { colors } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import CustomTabBar from '../components/CustomTabBar';
 
 const Tab = createBottomTabNavigator();
@@ -20,11 +20,11 @@ const ICONS = {
 };
 
 export default function TabNavigator() {
+  const { colors } = useTheme();
   const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 64;
 
   return (
     <Tab.Navigator
-      // ensure scene content doesn't get hidden behind the absolute tab bar
       sceneContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT }}
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -38,10 +38,7 @@ export default function TabNavigator() {
           height: TAB_BAR_HEIGHT,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         tabBarIcon: ({ focused, color, size }) => {
           const ic = ICONS[route.name];
           const name = focused ? ic.active : ic.inactive;
@@ -56,10 +53,7 @@ export default function TabNavigator() {
         component={AddExpenseScreen}
         options={{ title: 'Add' }}
         listeners={({ navigation }) => ({
-          tabPress: () => {
-            // Clear any existing expense param so Add screen is not in editing mode
-            navigation.setParams({ expense: undefined });
-          },
+          tabPress: () => { navigation.setParams({ expense: undefined }); },
         })}
       />
       <Tab.Screen name="Reports" component={ReportsScreen} />

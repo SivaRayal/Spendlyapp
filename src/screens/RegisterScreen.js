@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, typography } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { spacing, typography } from '../theme';
 import TextField from '../components/TextField';
 import PrimaryButton from '../components/PrimaryButton';
 
 export default function RegisterScreen({ navigation }) {
   const { registerUser, loginWithBiometric, getBiometricCapability } = useAuth();
+  const { colors } = useTheme();
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [busy, setBusy] = useState(false);
 
@@ -24,23 +26,16 @@ export default function RegisterScreen({ navigation }) {
     try {
       const cap = await getBiometricCapability();
       if (!cap.hasHardware) {
-        Alert.alert(
-          'No biometrics',
-          'This device has no biometric hardware. We will still create your account, but anyone with the device can open the app.',
-        );
+        Alert.alert('No biometrics', 'This device has no biometric hardware. We will still create your account, but anyone with the device can open the app.');
       } else if (!cap.enrolled) {
-        Alert.alert(
-          'Set up biometrics',
-          'Please enable Face ID / fingerprint in system settings, then return here.',
-        );
+        Alert.alert('Set up biometrics', 'Please enable Face ID / fingerprint in system settings, then return here.');
         return;
       }
 
       const { created } = await registerUser(form);
-      // Immediately try biometric login so the user lands inside.
       try {
         await loginWithBiometric(created.id);
-      } catch (e) {
+      } catch {
         Alert.alert('Account created', 'Sign in from the home screen to continue.');
         navigation.goBack();
       }
@@ -51,54 +46,33 @@ export default function RegisterScreen({ navigation }) {
     }
   }
 
+  const dynamicStyles = useMemo(() => ({
+    safe: { flex: 1, backgroundColor: colors.background },
+    title: { ...typography.headline, color: colors.text },
+    lead: { ...typography.body, color: colors.textMuted, marginBottom: spacing.xl },
+  }), [colors]);
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
+    <SafeAreaView style={dynamicStyles.safe} edges={['top']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.headerRow}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
             <Ionicons name="chevron-back" size={28} color={colors.primary} />
           </Pressable>
-          <Text style={styles.title}>Create account</Text>
+          <Text style={dynamicStyles.title}>Create account</Text>
           <View style={{ width: 28 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.lead}>
+          <Text style={dynamicStyles.lead}>
             Your data stays on this device. We use Face ID / fingerprint to lock the app.
           </Text>
 
-          <TextField
-            label="Full name"
-            value={form.name}
-            onChangeText={(v) => update('name', v)}
-            placeholder="Your name"
-            autoCapitalize="words"
-          />
-          <TextField
-            label="Email"
-            value={form.email}
-            onChangeText={(v) => update('email', v)}
-            placeholder="you@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextField
-            label="Phone (optional)"
-            value={form.phone}
-            onChangeText={(v) => update('phone', v)}
-            placeholder="+91 …"
-            keyboardType="phone-pad"
-          />
+          <TextField label="Full name"       value={form.name}  onChangeText={(v) => update('name', v)}  placeholder="Your name"       autoCapitalize="words" />
+          <TextField label="Email"           value={form.email} onChangeText={(v) => update('email', v)} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" />
+          <TextField label="Phone (optional)"value={form.phone} onChangeText={(v) => update('phone', v)} placeholder="+91 …"           keyboardType="phone-pad" />
 
-          <PrimaryButton
-            title="Create account"
-            icon="finger-print"
-            onPress={handleRegister}
-            loading={busy}
-          />
+          <PrimaryButton title="Create account" icon="finger-print" onPress={handleRegister} loading={busy} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -106,7 +80,6 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,11 +87,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  title: { ...typography.headline, color: colors.text },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  lead: {
-    ...typography.body,
-    color: colors.textMuted,
-    marginBottom: spacing.xl,
-  },
 });

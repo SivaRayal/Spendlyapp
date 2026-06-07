@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import Screen from '../components/Screen';
 import Card from '../components/Card';
 import TextField from '../components/TextField';
@@ -8,63 +7,37 @@ import PrimaryButton from '../components/PrimaryButton';
 import SegmentedControl from '../components/SegmentedControl';
 import Chip from '../components/Chip';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { addExpense, CATEGORIES, TRANSACTION_TYPES, MODES } from '../db/excelDb';
 import { todayISO, inr } from '../theme/format';
 import DatePicker from '../components/DatePicker';
-import { colors, spacing, typography, radius, CATEGORY_META } from '../theme';
+import { spacing, typography, CATEGORY_META } from '../theme';
 
 export default function AddExpenseScreen({ navigation, route }) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const editing = route?.params?.expense ? true : false;
   const [form, setForm] = useState({
-    date: todayISO(),
-    details: '',
-    type: 'Debit',
-    mode: 'UPI',
-    amount: '',
-    category: 'Bill',
+    date: todayISO(), details: '', type: 'Debit', mode: 'UPI', amount: '', category: 'Bill',
   });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const e = route?.params?.expense;
     if (e) {
-      setForm({
-        date: e.date || todayISO(),
-        details: e.details || '',
-        type: e.type || 'Debit',
-        mode: e.mode || 'UPI',
-        amount: String(e.amount || ''),
-        category: e.category || 'Bill',
-      });
+      setForm({ date: e.date || todayISO(), details: e.details || '', type: e.type || 'Debit', mode: e.mode || 'UPI', amount: String(e.amount || ''), category: e.category || 'Bill' });
     } else {
-      // Reset form when opening Add screen without an expense (avoid cached values)
-      setForm({
-        date: todayISO(),
-        details: '',
-        type: 'Debit',
-        mode: 'UPI',
-        amount: '',
-        category: 'Bill',
-      });
+      setForm({ date: todayISO(), details: '', type: 'Debit', mode: 'UPI', amount: '', category: 'Bill' });
     }
   }, [route?.params?.expense]);
 
-  function set(field, value) {
-    setForm({ ...form, [field]: value });
-  }
+  function set(field, value) { setForm({ ...form, [field]: value }); }
 
   async function handleSave() {
-    if (!form.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return Alert.alert('Invalid date', 'Date must be in YYYY-MM-DD format.');
-    }
+    if (!form.date.match(/^\d{4}-\d{2}-\d{2}$/)) return Alert.alert('Invalid date', 'Date must be in YYYY-MM-DD format.');
     const amt = Number(form.amount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      return Alert.alert('Invalid amount', 'Enter an amount greater than zero.');
-    }
-    if (!form.details.trim()) {
-      return Alert.alert('Missing details', 'Add a short description.');
-    }
+    if (!Number.isFinite(amt) || amt <= 0) return Alert.alert('Invalid amount', 'Enter an amount greater than zero.');
+    if (!form.details.trim()) return Alert.alert('Missing details', 'Add a short description.');
 
     setBusy(true);
     try {
@@ -72,19 +45,13 @@ export default function AddExpenseScreen({ navigation, route }) {
         const id = route.params.expense.id;
         const { updateExpense } = await import('../db/excelDb');
         await updateExpense(user.id, id, { ...form, amount: amt });
-        Alert.alert('Updated', 'Expense updated successfully.', [
-          { text: 'OK', onPress: () => navigation.navigate('Home') },
-        ]);
+        Alert.alert('Updated', 'Expense updated successfully.', [{ text: 'OK', onPress: () => navigation.navigate('Home') }]);
       } else {
         await addExpense(user.id, { ...form, amount: amt });
-        Alert.alert(
-          'Saved',
-          'Expense added to your monthly sheet.',
-          [
-            { text: 'Add another', onPress: () => setForm({ ...form, details: '', amount: '' }), style: 'cancel' },
-            { text: 'View dashboard', onPress: () => navigation.navigate('Home') },
-          ],
-        );
+        Alert.alert('Saved', 'Expense added to your monthly sheet.', [
+          { text: 'Add another', onPress: () => setForm({ ...form, details: '', amount: '' }), style: 'cancel' },
+          { text: 'View dashboard', onPress: () => navigation.navigate('Home') },
+        ]);
       }
     } catch (err) {
       Alert.alert('Could not save', err.message);
@@ -107,20 +74,24 @@ export default function AddExpenseScreen({ navigation, route }) {
         } finally {
           setBusy(false);
         }
-      } },
+      }},
     ]);
   }
 
+  const dynamicStyles = useMemo(() => ({
+    fieldLabel:     { ...typography.subhead,   color: colors.textMuted, marginBottom: spacing.sm },
+    currencySymbol: { ...typography.largeTitle, color: colors.text, marginRight: spacing.sm },
+    amountHint:     { ...typography.footnote,  color: colors.textMuted, marginTop: spacing.xs },
+    section:        { ...typography.subhead, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: spacing.xl, marginBottom: spacing.sm, marginLeft: spacing.xs },
+  }), [colors]);
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <Screen title="Add Expense" subtitle="Capture a new transaction">
         <Card>
-          <Text style={styles.fieldLabel}>Amount</Text>
+          <Text style={dynamicStyles.fieldLabel}>Amount</Text>
           <View style={styles.amountRow}>
-            <Text style={styles.currencySymbol}>₹</Text>
+            <Text style={dynamicStyles.currencySymbol}>₹</Text>
             <TextField
               value={form.amount}
               onChangeText={(v) => set('amount', v.replace(/[^0-9.]/g, ''))}
@@ -129,43 +100,26 @@ export default function AddExpenseScreen({ navigation, route }) {
               style={{ flex: 1, marginBottom: 0 }}
             />
           </View>
-          {form.amount ? (
-            <Text style={styles.amountHint}>{inr(form.amount)}</Text>
-          ) : null}
+          {form.amount ? <Text style={dynamicStyles.amountHint}>{inr(form.amount)}</Text> : null}
         </Card>
 
-        <Text style={styles.section}>Transaction type</Text>
-        <SegmentedControl
-          options={TRANSACTION_TYPES.map((t) => ({ value: t, label: t }))}
-          value={form.type}
-          onChange={(v) => set('type', v)}
-        />
+        <Text style={dynamicStyles.section}>Transaction type</Text>
+        <SegmentedControl options={TRANSACTION_TYPES.map((t) => ({ value: t, label: t }))} value={form.type} onChange={(v) => set('type', v)} />
 
-        <Text style={styles.section}>Payment mode</Text>
-        <SegmentedControl
-          options={MODES.map((m) => ({ value: m, label: m }))}
-          value={form.mode}
-          onChange={(v) => set('mode', v)}
-        />
+        <Text style={dynamicStyles.section}>Payment mode</Text>
+        <SegmentedControl options={MODES.map((m) => ({ value: m, label: m }))} value={form.mode} onChange={(v) => set('mode', v)} />
 
-        <Text style={styles.section}>Category</Text>
+        <Text style={dynamicStyles.section}>Category</Text>
         <View style={styles.chipsWrap}>
           {CATEGORIES.map((c) => {
             const meta = CATEGORY_META[c] || {};
             return (
-              <Chip
-                key={c}
-                label={c}
-                icon={meta.icon}
-                color={meta.color}
-                selected={form.category === c}
-                onPress={() => set('category', c)}
-              />
+              <Chip key={c} label={c} icon={meta.icon} color={meta.color} selected={form.category === c} onPress={() => set('category', c)} />
             );
           })}
         </View>
 
-        <Text style={styles.section}>Details</Text>
+        <Text style={dynamicStyles.section}>Details</Text>
         <Card padded style={{ marginTop: 0 }}>
           <TextField
             value={form.details}
@@ -173,11 +127,7 @@ export default function AddExpenseScreen({ navigation, route }) {
             placeholder="e.g. Groceries at supermarket"
             style={{ marginBottom: spacing.md }}
           />
-          <DatePicker
-            label="Date"
-            value={form.date}
-            onChange={(v) => set('date', v)}
-          />
+          <DatePicker label="Date" value={form.date} onChange={(v) => set('date', v)} />
         </Card>
 
         <View style={{ height: spacing.xl }} />
@@ -189,13 +139,7 @@ export default function AddExpenseScreen({ navigation, route }) {
         />
         {editing ? (
           <View style={{ marginTop: spacing.md }}>
-            <PrimaryButton
-              title="Delete"
-              icon="trash"
-              onPress={handleDelete}
-              color="danger"
-              loading={busy}
-            />
+            <PrimaryButton title="Delete" icon="trash" onPress={handleDelete} color="danger" loading={busy} />
           </View>
         ) : null}
         <Text style={styles.footer}>&nbsp;</Text>
@@ -205,37 +149,7 @@ export default function AddExpenseScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  fieldLabel: {
-    ...typography.subhead,
-    color: colors.textMuted,
-    marginBottom: spacing.sm,
-  },
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  currencySymbol: {
-    ...typography.largeTitle,
-    color: colors.text,
-    marginRight: spacing.sm,
-  },
-  amountHint: {
-    ...typography.footnote,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  section: {
-    ...typography.subhead,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
-    marginLeft: spacing.xs,
-  },
-  chipsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  footer: { marginTop: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  amountRow: { flexDirection: 'row', alignItems: 'center' },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  footer: { marginTop: spacing.xl, marginBottom: spacing.sm },
 });

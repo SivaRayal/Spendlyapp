@@ -2,11 +2,14 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from './Card';
-import { colors, spacing } from '../theme';
+import { spacing } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import { inr } from '../theme/format';
 import { CATEGORY_META } from '../theme';
 
 export default function TopSpending({ top, styles }) {
+  const { colors } = useTheme();
+
   return (
     <>
       <Text style={styles.section}>Top 5 spending</Text>

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, Text, ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing, typography } from '../theme';
+import { radius, spacing, typography } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function PrimaryButton({
   title,
@@ -11,7 +13,16 @@ export default function PrimaryButton({
   icon,
   style,
 }) {
+  const { colors } = useTheme();
+
+  const VARIANTS = useMemo(() => ({
+    primary:   { bg: { backgroundColor: colors.primary },  label: { color: colors.white } },
+    secondary: { bg: { backgroundColor: colors.inputBg },  label: { color: colors.primary } },
+    danger:    { bg: { backgroundColor: colors.danger },   label: { color: colors.white } },
+  }), [colors]);
+
   const styleSet = VARIANTS[variant] || VARIANTS.primary;
+
   return (
     <Pressable
       onPress={onPress}
@@ -44,26 +55,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  label: {
-    ...typography.headline,
-  },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  label: { ...typography.headline },
 });
-
-const VARIANTS = {
-  primary: {
-    bg: { backgroundColor: colors.primary },
-    label: { color: colors.white },
-  },
-  secondary: {
-    bg: { backgroundColor: colors.inputBg },
-    label: { color: colors.primary },
-  },
-  danger: {
-    bg: { backgroundColor: colors.danger },
-    label: { color: colors.white },
-  },
-};

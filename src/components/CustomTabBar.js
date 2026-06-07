@@ -2,12 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, Platform } from 'react-native';
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import { useUi } from '../context/UiContext';
+import { useTheme } from '../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme';
+import { spacing } from '../theme';
 
 export default function CustomTabBar(props) {
   const { visible } = useUi();
-  const trans = useRef(new Animated.Value(0)).current; // 0 visible, 1 hidden
+  const { colors } = useTheme();
+  const trans = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 64;
 
@@ -25,13 +27,19 @@ export default function CustomTabBar(props) {
 
   return (
     <Animated.View
-      style={[
-        styles.wrap,
-        { transform: [{ translateY }], bottom: 0 },
-      ]}
+      style={[styles.wrap, { transform: [{ translateY }], bottom: 0 }]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
-      <View style={[styles.inner, { paddingBottom: insets.bottom, paddingHorizontal: spacing.lg, backgroundColor: colors.card, borderTopWidth: 0.5, borderTopColor: colors.separator }]}>
+      <View style={[
+        styles.inner,
+        {
+          paddingBottom: insets.bottom,
+          paddingHorizontal: spacing.lg,
+          backgroundColor: colors.card,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.separator,
+        },
+      ]}>
         <BottomTabBar {...props} />
       </View>
     </Animated.View>
@@ -47,7 +55,5 @@ const styles = StyleSheet.create({
     elevation: 6,
     zIndex: 20,
   },
-  inner: {
-    backgroundColor: 'transparent',
-  },
+  inner: { backgroundColor: 'transparent' },
 });

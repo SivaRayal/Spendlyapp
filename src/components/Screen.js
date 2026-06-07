@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, RefreshControl, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, typography } from '../theme';
+import { spacing, typography } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import { useUi } from '../context/UiContext';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 
 export default function Screen({
   title,
@@ -16,11 +18,18 @@ export default function Screen({
   contentStyle,
 }) {
   const ui = useUi();
+  const { colors } = useTheme();
   const lastOffset = useRef(0);
   const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
   const touchStartRef = useRef(null);
-  const EXTRA_TABBAR_SPACE = Platform.OS === 'ios' ? 88 : 64; // match tab bar height
+  const EXTRA_TABBAR_SPACE = Platform.OS === 'ios' ? 88 : 64;
+
+  const dynamicStyles = useMemo(() => ({
+    safe: { flex: 1, backgroundColor: colors.background },
+    title: { ...typography.largeTitle, color: colors.text },
+    subtitle: { ...typography.subhead, color: colors.textMuted, marginTop: 4 },
+  }), [colors]);
 
   const body = scrollable ? (
     <KeyboardAwareScrollView
@@ -37,19 +46,13 @@ export default function Screen({
       extraScrollHeight={20}
       scrollEventThrottle={16}
       onScroll={(e) => {
-        // drive Animated scroll handling in UiContext
         if (ui.onScrollAnimated) ui.onScrollAnimated(e);
         const y = e.nativeEvent.contentOffset.y;
         const prev = lastOffset.current || 0;
         const delta = y - prev;
         if (Math.abs(delta) > 5) {
-          if (delta > 0) {
-            // Scrolling down -> hide tab bar
-            ui.hide();
-          } else {
-            // Scrolling up -> show tab bar
-            ui.show(3000);
-          }
+          if (delta > 0) ui.hide();
+          else ui.show(3000);
         }
         lastOffset.current = y;
       }}
@@ -70,12 +73,8 @@ export default function Screen({
         try {
           const start = touchStartRef.current || 0;
           const end = e.nativeEvent.pageY;
-          const delta = end - start;
-          // swipe up (negative delta) should show the tab bar
-          if (delta < -20) ui.show(3000);
-        } catch (err) {
-          // ignore
-        }
+          if (end - start < -20) ui.show(3000);
+        } catch {}
       }}
     >
       {children}
@@ -83,12 +82,12 @@ export default function Screen({
   );
 
   return (
-    <SafeAreaView edges={['top','bottom']} style={styles.safe}>
+    <SafeAreaView edges={['top', 'bottom']} style={dynamicStyles.safe}>
       {(title || subtitle || rightAccessory) && (
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            {title && <Text style={dynamicStyles.title}>{title}</Text>}
+            {subtitle && <Text style={dynamicStyles.subtitle}>{subtitle}</Text>}
           </View>
           {rightAccessory}
         </View>
@@ -107,10 +106,6 @@ export default function Screen({
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -118,18 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  title: {
-    ...typography.largeTitle,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.subhead,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,

@@ -1,32 +1,14 @@
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing, typography } from '../theme';
+import { radius, spacing, typography } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Chip({ label, icon, color, selected, onPress }) {
+  const { colors } = useTheme();
   const tint = color || colors.primary;
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.chip,
-        selected && { backgroundColor: tint, borderColor: tint },
-      ]}
-    >
-      {icon && (
-        <Ionicons
-          name={icon}
-          size={14}
-          color={selected ? colors.white : tint}
-          style={{ marginRight: 6 }}
-        />
-      )}
-      <Text style={[styles.label, selected && styles.labelActive]}>{label}</Text>
-    </Pressable>
-  );
-}
 
-const styles = StyleSheet.create({
-  chip: {
+  const chipBase = useMemo(() => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -37,14 +19,29 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     marginRight: 8,
     marginBottom: 8,
-  },
-  label: {
-    ...typography.subhead,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  labelActive: {
-    color: colors.white,
-    fontWeight: '600',
-  },
+  }), [colors]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[chipBase, selected && { backgroundColor: tint, borderColor: tint }]}
+    >
+      {icon && (
+        <Ionicons
+          name={icon}
+          size={14}
+          color={selected ? colors.white : tint}
+          style={{ marginRight: 6 }}
+        />
+      )}
+      <Text style={[styles.label, { color: selected ? colors.white : colors.textSecondary }, selected && styles.labelActive]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  label: { ...typography.subhead, fontWeight: '500' },
+  labelActive: { fontWeight: '600' },
 });

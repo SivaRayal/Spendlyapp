@@ -1,16 +1,17 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TabNavigator from './TabNavigator';
 import CategoryScreen from '../screens/CategoryScreen';
-import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { user, bootstrapping } = useAuth();
+  const { colors } = useTheme();
 
   if (bootstrapping) {
     return (
@@ -24,7 +25,7 @@ export default function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
         <>
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="Main"     component={TabNavigator} />
           <Stack.Screen name="Category" component={CategoryScreen} />
         </>
       ) : (

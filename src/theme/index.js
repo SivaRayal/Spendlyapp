@@ -1,30 +1,57 @@
 import { Platform } from 'react-native';
 
-// iOS Human Interface Guidelines inspired palette.
-export const colors = {
-  background:    '#F2F2F7',  // iOS systemGroupedBackground
-  groupedBackground: '#FFFFFF',
-  card:          '#FFFFFF',
-  cardElevated:  '#FFFFFF',
-  separator:     'rgba(60, 60, 67, 0.12)',
-  primary:       '#007AFF',  // iOS blue
-  primaryDark:   '#0051D5',
-  success:       '#34C759',  // iOS green
-  danger:        '#FF3B30',  // iOS red
-  warning:       '#FF9500',  // iOS orange
-  purple:        '#AF52DE',
-  pink:          '#FF2D55',
-  teal:          '#5AC8FA',
-  indigo:        '#5856D6',
-  text:          '#1C1C1E',
-  textSecondary: '#3C3C43',
-  textMuted:     'rgba(60, 60, 67, 0.6)',
-  textPlaceholder: 'rgba(60, 60, 67, 0.3)',
-  inputBg:       '#F2F2F7',
-  inputBorder:   'rgba(60, 60, 67, 0.08)',
-  white:         '#FFFFFF',
-  shadow:        'rgba(0,0,0,0.08)',
+export const lightColors = {
+  background:       '#F2F2F7',
+  groupedBackground:'#FFFFFF',
+  card:             '#FFFFFF',
+  cardElevated:     '#FFFFFF',
+  separator:        'rgba(60, 60, 67, 0.12)',
+  primary:          '#007AFF',
+  primaryDark:      '#0051D5',
+  success:          '#34C759',
+  danger:           '#FF3B30',
+  warning:          '#FF9500',
+  purple:           '#AF52DE',
+  pink:             '#FF2D55',
+  teal:             '#5AC8FA',
+  indigo:           '#5856D6',
+  text:             '#1C1C1E',
+  textSecondary:    '#3C3C43',
+  textMuted:        'rgba(60, 60, 67, 0.6)',
+  textPlaceholder:  'rgba(60, 60, 67, 0.3)',
+  inputBg:          '#F2F2F7',
+  inputBorder:      'rgba(60, 60, 67, 0.08)',
+  white:            '#FFFFFF',
+  shadow:           'rgba(0,0,0,0.08)',
 };
+
+export const darkColors = {
+  background:       '#1C1C1E',
+  groupedBackground:'#2C2C2E',
+  card:             '#2C2C2E',
+  cardElevated:     '#3A3A3C',
+  separator:        'rgba(84, 84, 88, 0.65)',
+  primary:          '#0A84FF',
+  primaryDark:      '#409CFF',
+  success:          '#30D158',
+  danger:           '#FF453A',
+  warning:          '#FF9F0A',
+  purple:           '#BF5AF2',
+  pink:             '#FF375F',
+  teal:             '#64D2FF',
+  indigo:           '#5E5CE6',
+  text:             '#FFFFFF',
+  textSecondary:    'rgba(235, 235, 245, 0.6)',
+  textMuted:        'rgba(235, 235, 245, 0.3)',
+  textPlaceholder:  'rgba(235, 235, 245, 0.18)',
+  inputBg:          '#3A3A3C',
+  inputBorder:      'rgba(84, 84, 88, 0.36)',
+  white:            '#FFFFFF',
+  shadow:           'rgba(0,0,0,0.3)',
+};
+
+// Default export keeps backwards compat for any static usage
+export const colors = lightColors;
 
 export const radius = {
   sm: 8,
@@ -44,7 +71,6 @@ export const spacing = {
 };
 
 export const fonts = {
-  // iOS uses San Francisco. Android falls back gracefully.
   regular: Platform.select({ ios: 'System', android: 'sans-serif' }),
   medium:  Platform.select({ ios: 'System', android: 'sans-serif-medium' }),
   bold:    Platform.select({ ios: 'System', android: 'sans-serif' }),
@@ -80,18 +106,22 @@ export const shadows = {
   },
 };
 
-// React Navigation theme so headers/backgrounds match.
-export const navTheme = {
-  dark: false,
-  colors: {
-    primary: colors.primary,
-    background: colors.background,
-    card: colors.white,
-    text: colors.text,
-    border: colors.separator,
-    notification: colors.danger,
-  },
-};
+export function makeNavTheme(colors, isDark) {
+  return {
+    dark: isDark,
+    colors: {
+      primary:      colors.primary,
+      background:   colors.background,
+      card:         colors.card,
+      text:         colors.text,
+      border:       colors.separator,
+      notification: colors.danger,
+    },
+  };
+}
+
+// Legacy export for NavigationContainer (light only, kept for compat)
+export const navTheme = makeNavTheme(lightColors, false);
 
 export const CATEGORY_META = {
   Income:     { icon: 'cash-outline',         color: '#34C759' },
